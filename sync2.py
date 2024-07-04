@@ -1,90 +1,66 @@
-import tkinter as tk
-from tkinter import filedialog
+import sys
 import threading
-from mgapi import Port  # Senkron haberleşme için gerekli kütüphaneyi ekleyin
+from mgapi import Port
+import tkinter as tk
+from tkinter import filedialog, messagebox
 
 class CommunicationApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Synchronous Communication App")
+        self.root.title("Sync Communication Interface")
+        self.create_widgets()
+        self.running = False
 
-        # Port 1 widgets
-        self.port1_label = tk.Label(root, text="Port 1:")
-        self.port1_label.grid(row=0, column=0, padx=5, pady=5)
-        self.port1_entry = tk.Entry(root)
+    def create_widgets(self):
+        tk.Label(self.root, text="Port 1:").grid(row=0, column=0, padx=5, pady=5)
+        self.port1_entry = tk.Entry(self.root)
         self.port1_entry.grid(row=0, column=1, padx=5, pady=5)
-        self.port1_button = tk.Button(root, text="Browse", command=lambda: self.browse_file(self.port1_entry))
-        self.port1_button.grid(row=0, column=2, padx=5, pady=5)
         self.port1_entry.insert(0, "MGMP1P1")
 
-        # Port 2 widgets
-        self.port2_label = tk.Label(root, text="Port 2:")
-        self.port2_label.grid(row=1, column=0, padx=5, pady=5)
-        self.port2_entry = tk.Entry(root)
-        self.port2_entry.grid(row=1, column=1, padx=5, pady=5)
-        self.port2_button = tk.Button(root, text="Browse", command=lambda: self.browse_file(self.port2_entry))
-        self.port2_button.grid(row=1, column=2, padx=5, pady=5)
+        tk.Label(self.root, text="Input File 1:").grid(row=1, column=0, padx=5, pady=5)
+        self.input_file1_entry = tk.Entry(self.root)
+        self.input_file1_entry.grid(row=1, column=1, padx=5, pady=5)
+        tk.Button(self.root, text="Browse", command=lambda: self.browse_file(self.input_file1_entry)).grid(row=1, column=2, padx=5, pady=5)
+
+        tk.Label(self.root, text="Output File 1:").grid(row=2, column=0, padx=5, pady=5)
+        self.output_file1_entry = tk.Entry(self.root)
+        self.output_file1_entry.grid(row=2, column=1, padx=5, pady=5)
+        tk.Button(self.root, text="Browse", command=lambda: self.browse_file(self.output_file1_entry)).grid(row=2, column=2, padx=5, pady=5)
+
+        tk.Label(self.root, text="Port 2:").grid(row=3, column=0, padx=5, pady=5)
+        self.port2_entry = tk.Entry(self.root)
+        self.port2_entry.grid(row=3, column=1, padx=5, pady=5)
         self.port2_entry.insert(0, "MGMP1P2")
 
-        # Input files widgets
-        self.input_file1_label = tk.Label(root, text="Input File 1:")
-        self.input_file1_label.grid(row=2, column=0, padx=5, pady=5)
-        self.input_file1_entry = tk.Entry(root)
-        self.input_file1_entry.grid(row=2, column=1, padx=5, pady=5)
-        self.input_file1_button = tk.Button(root, text="Browse", command=lambda: self.browse_file(self.input_file1_entry))
-        self.input_file1_button.grid(row=2, column=2, padx=5, pady=5)
+        tk.Label(self.root, text="Input File 2:").grid(row=4, column=0, padx=5, pady=5)
+        self.input_file2_entry = tk.Entry(self.root)
+        self.input_file2_entry.grid(row=4, column=1, padx=5, pady=5)
+        tk.Button(self.root, text="Browse", command=lambda: self.browse_file(self.input_file2_entry)).grid(row=4, column=2, padx=5, pady=5)
 
-        self.input_file2_label = tk.Label(root, text="Input File 2:")
-        self.input_file2_label.grid(row=3, column=0, padx=5, pady=5)
-        self.input_file2_entry = tk.Entry(root)
-        self.input_file2_entry.grid(row=3, column=1, padx=5, pady=5)
-        self.input_file2_button = tk.Button(root, text="Browse", command=lambda: self.browse_file(self.input_file2_entry))
-        self.input_file2_button.grid(row=3, column=2, padx=5, pady=5)
-
-        # Output files widgets
-        self.output_file1_label = tk.Label(root, text="Output File 1:")
-        self.output_file1_label.grid(row=4, column=0, padx=5, pady=5)
-        self.output_file1_entry = tk.Entry(root)
-        self.output_file1_entry.grid(row=4, column=1, padx=5, pady=5)
-        self.output_file1_button = tk.Button(root, text="Browse", command=lambda: self.browse_file(self.output_file1_entry))
-        self.output_file1_button.grid(row=4, column=2, padx=5, pady=5)
-
-        self.output_file2_label = tk.Label(root, text="Output File 2:")
-        self.output_file2_label.grid(row=5, column=0, padx=5, pady=5)
-        self.output_file2_entry = tk.Entry(root)
+        tk.Label(self.root, text="Output File 2:").grid(row=5, column=0, padx=5, pady=5)
+        self.output_file2_entry = tk.Entry(self.root)
         self.output_file2_entry.grid(row=5, column=1, padx=5, pady=5)
-        self.output_file2_button = tk.Button(root, text="Browse", command=lambda: self.browse_file(self.output_file2_entry))
-        self.output_file2_button.grid(row=5, column=2, padx=5, pady=5)
+        tk.Button(self.root, text="Browse", command=lambda: self.browse_file(self.output_file2_entry)).grid(row=5, column=2, padx=5, pady=5)
 
-        # Data rate widget
-        self.data_rate_label = tk.Label(root, text="Data Rate:")
-        self.data_rate_label.grid(row=6, column=0, padx=5, pady=5)
-        self.data_rate_entry = tk.Entry(root)
+        tk.Label(self.root, text="Data Rate:").grid(row=6, column=0, padx=5, pady=5)
+        self.data_rate_entry = tk.Entry(self.root)
         self.data_rate_entry.grid(row=6, column=1, padx=5, pady=5)
-        self.data_rate_entry.insert(0, "9600")
+        self.data_rate_entry.insert(0, '9600')
 
 
-        # Start and stop buttons
-        self.start_button = tk.Button(root, text="Start Synchronous Communication", command=self.on_start_synchronous)
-        self.start_button.grid(row=8, column=1, padx=5, pady=5)
-        self.stop_button = tk.Button(root, text="Stop", command=self.on_stop)
-        self.stop_button.grid(row=8, column=2, padx=5, pady=5)
-        self.quit_button = tk.Button(root, text="Quit", command=root.quit)
-        self.quit_button.grid(row=8, column=3, padx=5, pady=5)
-
-        # Running status
-        self.running = False
-        self.ports = []
+        tk.Button(self.root, text="Start", command=self.on_start).grid(row=10, column=1, padx=5, pady=5)
+        tk.Button(self.root, text="Stop", command=self.on_stop).grid(row=10, column=2, padx=5, pady=5)
+        tk.Button(self.root, text="Quit", command=self.root.quit).grid(row=10, column=3, padx=5, pady=5)
 
     def browse_file(self, entry):
-        file_path = filedialog.askopenfilename()
-        if file_path:
+        filename = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
+        if filename:
             entry.delete(0, tk.END)
-            entry.insert(0, file_path)
+            entry.insert(0, filename)
 
-    def on_start_synchronous(self):
-        port1_name = self.port1_entry.get()
-        port2_name = self.port2_entry.get()
+    def on_start(self):
+        port1 = self.port1_entry.get()
+        port2 = self.port2_entry.get()
         input_file1 = self.input_file1_entry.get()
         output_file1 = self.output_file1_entry.get()
         input_file2 = self.input_file2_entry.get()
@@ -92,57 +68,99 @@ class CommunicationApp:
         data_rate = int(self.data_rate_entry.get())
 
 
-        self.ports = [Port(port1_name), Port(port2_name)]
-
-        for port in self.ports:
-            settings = Port.Settings()
-            settings.protocol = Port.HDLC
-            settings.encoding = Port.NRZ
-            settings.crc = Port.OFF
-            settings.transmit_clock = Port.TXC_INPUT
-            settings.receive_clock = Port.TXC_INPUT
-            settings.internal_clock_rate = data_rate
-            port.apply_settings(settings)
-            port.transmit_idle_pattern = 0xFF
-            port.interface = Port.RS232
-
-
+        if not port1 or not port2 or not input_file1 or not output_file1 or not input_file2 or not output_file2:
+            messagebox.showerror("Error", "All fields must be filled")
+            return
 
         self.running = True
-        # galiba receiver yapmıyor enable receiver a bak
-
-        threading.Thread(target=self.send_thread_func, args=(self.ports[0], input_file1)).start()
-        threading.Thread(target=self.receive_thread_func, args=(self.ports[0], output_file1)).start()
-        threading.Thread(target=self.send_thread_func, args=(self.ports[1], input_file2)).start()
-        threading.Thread(target=self.receive_thread_func, args=(self.ports[1], output_file2)).start()
+        self.thread = threading.Thread(target=self.start_communication, args=(port1, port2, input_file1, output_file1, input_file2, output_file2, data_rate))
+        self.thread.start()
 
     def on_stop(self):
         self.running = False
-        for port in self.ports:
-            port.close()
 
-    def send_thread_func(self, port, input_file):
-        with open(input_file, 'rb') as f:
+    def start_communication(self, port1_name, port2_name, input_file1, output_file1, input_file2, output_file2, data_rate):
+        port1 = open_port(port1_name)
+        port2 = open_port(port2_name)
+
+        configure_port(port1, data_rate)
+        configure_port(port2, data_rate)
+
+        print('Press Ctrl-C to stop the program')
+
+        port1.enable_receiver()
+        port2.enable_receiver()
+
+        receive_thread1 = threading.Thread(target=receive_thread_func, args=(port1, port1_name, output_file1, lambda: self.running))
+        receive_thread2 = threading.Thread(target=receive_thread_func, args=(port2, port2_name, output_file2, lambda: self.running))
+        receive_thread1.start()
+        receive_thread2.start()
+
+        with open(input_file1, 'r') as f1, open(input_file2, 'r') as f2:
+            hex_data1 = f1.read().strip()
+            buf1 = bytearray.fromhex(hex_data1)
+
+            hex_data2 = f2.read().strip()
+            buf2 = bytearray.fromhex(hex_data2)
+
+        try:
             i = 1
             while self.running:
-                buf = f.read(100)
-                if not buf:
-                    break
-                buf = bytearray(buf)  # Yazılabilir bir buffer yap
-                port.write(buf)
-                port.flush()
-                print(f"[{port.name}] >>> Sent {len(buf)} bytes")
-                i += 1
+                print(f'>>> {port1_name} ' + '{:0>9d}'.format(i) + ' send ' + str(len(buf1)) + ' bytes\n', end='')
+                port1.write(buf1)
+                port1.flush()
 
-    def receive_thread_func(self, port, output_file):
-        with open(output_file, 'wb') as f:
-            while self.running:
-                buf = bytearray(100)
-                bytes_received = port.read(buf)
-                if bytes_received:
-                    f.write(buf[:bytes_received])
-                    f.flush()
-                    print(f"[{port.name}] <<< Received {bytes_received} bytes")
+                print(f'>>> {port2_name} ' + '{:0>9d}'.format(i) + ' send ' + str(len(buf2)) + ' bytes\n', end='')
+                port2.write(buf2)
+                port2.flush()
+                i += 1
+        except KeyboardInterrupt:
+            print('Ctrl-C pressed')
+        finally:
+            port1.close()
+            port2.close()
+
+def receive_thread_func(port, port_name, output_file, running_check):
+    i = 1
+    with open(output_file, 'w') as f:
+        while running_check():
+            buf = port.read(100)
+            if not buf:
+                break
+            hex_data = buf.hex()
+            print(f'<<< {port_name} ' + '{:0>9d}'.format(i) + ' received ' + str(len(buf)) + ' bytes: ' + hex_data)
+            f.write(hex_data + '\n')
+            i += 1
+        f.close()
+
+def open_port(port_name):
+    port = Port(port_name)
+    print(f'Port {port_name} opening...')
+    try:
+        port.open()
+    except FileNotFoundError:
+        print(f'Port {port_name} not found')
+        sys.exit()
+    except PermissionError:
+        print(f'Access denied or {port_name} in use')
+        sys.exit()
+    except OSError:
+        print(f'Open error on {port_name}')
+        sys.exit()
+    return port
+
+def configure_port(port, data_rate):
+    settings = Port.Settings()
+    settings.protocol = Port.HDLC
+    settings.encoding = Port.NRZ
+    settings.crc = Port.CRC16
+    settings.transmit_clock = Port.TXC_INPUT
+    settings.receive_clock = Port.RXC_INPUT
+    settings.internal_clock_rate = data_rate
+    port.transmit_idle_pattern = 0xE7
+    port.interface = Port.RS232
+    port.apply_settings(settings)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
